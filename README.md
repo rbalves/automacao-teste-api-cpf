@@ -27,11 +27,11 @@ Após baixar o arquivo .zip, foi necessário executar as seguintes etapas:
 ## Clonando o projeto
 1. Abra o Prompt de Comando (Windows) ou o Terminal (Mac ou Linux)
 2. Navegue até um diretório de sua escolha
-3. Execute o seguinte comando git clone https://github.com/rbalves/automacao-teste-api-cpf.git
-4. Navegue, via Prompt de Comando ou Terminal, até o diretório do projeto automacao-teste-api-cpf
+3. Execute o seguinte comando **git clone https://github.com/rbalves/automacao-teste-api-cpf.git**
+4. Navegue, via Prompt de Comando ou Terminal, até o diretório do projeto **automacao-teste-api-cpf**
 5. Execute o comando mvn compile e aguarde até o término do build
 6. Abra a sua IDE de Desenvolvimento
-7. Nela, seleciona a opção de importação de projetos para o tipo Maven apontando para a pasta automacao-teste-api-cpf
+7. Nela, seleciona a opção de importação de projetos para o tipo Maven apontando para a pasta **automacao-teste-api-cpf**
 8. Aguarde sua IDE efetuar todas as configurações necessárias
 
 ## Dependências
