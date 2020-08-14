@@ -19,6 +19,8 @@ public class Simulacao {
 		this.parcelas = parcelas;
 		this.seguro = seguro;
 	}
+	
+	public Simulacao() {}
 
 	public int getId() {
 		return id;

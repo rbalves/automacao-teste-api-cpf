@@ -1,269 +1,247 @@
 package br.am.rbalves.rest;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-
-import java.util.HashMap;
-import java.util.Map;
-
+import static org.hamcrest.Matchers.*;
+import java.util.List;
+import org.apache.http.HttpStatus;
 import org.junit.Test;
-
-import com.github.javafaker.Faker;
-
-import br.am.rbalves.core.BaseTest;
+import br.am.rbalves.core.*;
+import br.am.rbalves.core.factories.MensagemErroFactory;
+import br.am.rbalves.core.factories.SimulacaoFactory;
+import io.restassured.http.ContentType;
 
 public class SimulacoesTest extends BaseTest {
 	
 	@Test
-	public void criarSimulacaoDadosValidos() {
+	public void deveCadastrarSimulacaoComSucesso() {
 		
-		Faker faker = new Faker();
-		
-		Map<String, Object> params = new HashMap<String, Object>();
-		
-		params.put("nome", faker.name().firstName());
-		params.put("cpf", Long.toString(faker.number().randomNumber(11, true)));
-		params.put("email", params.get("nome").toString().toLowerCase() + "@mail.com");
-		params.put("valor", faker.number().randomDouble(2, 1000, 40000));
-		params.put("parcelas", faker.number().numberBetween(2, 48));
-		params.put("seguro", faker.bool().bool());
+		Simulacao simulacao = SimulacaoFactory.gerarSimulacaoCadastro();
 		
 		given()
-			.contentType("application/json")
-			.body(params)
+			.contentType(ContentType.JSON)
+			.body(simulacao)
 		.when()
 			.post("/simulacoes")
 		.then()
-			.statusCode(201)
-			.contentType("application/json; charset=utf-8")
+			.statusCode(HttpStatus.SC_CREATED)
+			.contentType(ContentType.JSON)
 			.body("id", is(notNullValue()))
-			.body("nome", is(params.get("nome")))
-			.body("cpf", is(params.get("cpf")))
-			.body("email", is(params.get("email")))
-			.body("valor", is(Float.parseFloat(params.get("valor").toString())))
-			.body("parcelas", is(params.get("parcelas")))
-			.body("seguro", is(params.get("seguro")))
+			.body("nome", is(simulacao.getNome()))
+			.body("cpf", is(simulacao.getCpf()))
+			.body("email", is(simulacao.getEmail()))
+			.body("valor", is((float) (simulacao.getValor())))
+			.body("parcelas", is(simulacao.getParcelas()))
+			.body("seguro", is(simulacao.isSeguro()))
 		;
 	}
 	
 	@Test
-	public void criarSimulacaoDadosInvalidos() {
+	public void deveReportarCadastroComDadosInvalidos() {
 		
-		Map<String, Object> params = new HashMap<String, Object>();
-		
-		params.put("nome", "");
-		params.put("cpf", "");
-		params.put("email", "");
-		params.put("valor", 0);
-		params.put("parcelas", 1);
-		params.put("seguro", false);
-		
-		given()
-			.contentType("application/json")
-			.body(params)
-		.when()
-			.post("/simulacoes")
-		.then()
-			.statusCode(400)
-			.contentType("application/json; charset=utf-8")
-			.body("erros.nome", is(notNullValue()))
-			.body("erros.cpf", is(notNullValue()))
-			.body("erros.email", is(notNullValue()))
-			.body("erros.valor", is(notNullValue()))
-			.body("erros.parcelas", is(notNullValue()))
+		Simulacao simulacao = SimulacaoFactory.gerarSimulacaoCadastroDadosInvalidos();
 
-		;
+        given()
+            .contentType(ContentType.JSON)
+            .body(simulacao)
+        .when()
+            .post("/simulacoes")
+        .then()
+            .statusCode(HttpStatus.SC_BAD_REQUEST)
+            .contentType(ContentType.JSON)
+            .body("erros.nome", is("Nome não pode ser vazio"))
+            .body("erros.email", is("E-mail não deve ser vazio"))
+            .body("erros.cpf", is(MensagemErroFactory.mensagemCpf(simulacao.getCpf())))
+            .body("erros.valor", is(MensagemErroFactory.mensagemValor((float) simulacao.getValor())))
+            .body("erros.parcelas", is(MensagemErroFactory.mensagemParcelas(simulacao.getParcelas())))
+        ;
 	}
 	
 	@Test
-	public void criarSimulacaoCpfExistente() {
+	public void deveReportarCadastroComCpfInvalido() {
 		
-		Faker faker = new Faker();
-		
-		Map<String, Object> params = new HashMap<String, Object>();
-		
-		params.put("nome", faker.name().firstName());
-		params.put("cpf", "66414919004");
-		params.put("email", params.get("nome").toString().toLowerCase() + "@mail.com");
-		params.put("valor", faker.number().randomDouble(2, 1000, 40000));
-		params.put("parcelas", faker.number().numberBetween(2, 48));
-		params.put("seguro", faker.bool().bool());
-		
-		given()
-			.contentType("application/json")
-			.body(params)
-		.when()
-			.post("/simulacoes")
-		.then()
-			.statusCode(409)
-			.contentType("application/json; charset=utf-8")
-			.body("mensagem", is("CPF já existente"))
-		;
-	}
-	
-	@Test
-	public void alterarSimulacaoDadosValidos() {
-		
-		Faker faker = new Faker();
-		
-		Map<String, Object> params = new HashMap<String, Object>();
-		
-		params.put("nome", faker.name().firstName());
-		params.put("cpf", "66414919004");
-		params.put("email", params.get("nome").toString().toLowerCase() + "@mail.com");
-		params.put("valor", faker.number().randomDouble(2, 1000, 40000));
-		params.put("parcelas", faker.number().numberBetween(2, 48));
-		params.put("seguro", faker.bool().bool());
-		
-		given()
-			.contentType("application/json")
-			.body(params)
-		.when()
-			.put("/simulacoes/" + params.get("cpf"))
-		.then()
-			.statusCode(200)
-			.contentType("application/json; charset=utf-8")
-			.body("id", is(notNullValue()))
-			.body("nome", is(params.get("nome")))
-			.body("cpf", is(params.get("cpf")))
-			.body("email", is(params.get("email")))
-			.body("valor", is(Float.parseFloat(params.get("valor").toString())))
-			.body("parcelas", is(params.get("parcelas")))
-			.body("seguro", is(params.get("seguro")))
-		;
-	}
-	
-	@Test
-	public void alterarSimulacaoCpfInexistente() {
-		
-		Faker faker = new Faker();
-		
-		Map<String, Object> params = new HashMap<String, Object>();
-		
-		params.put("nome", faker.name().firstName());
-		params.put("cpf", "00000000000");
-		params.put("email", params.get("nome").toString().toLowerCase() + "@mail.com");
-		params.put("valor", faker.number().randomDouble(2, 1000, 40000));
-		params.put("parcelas", faker.number().numberBetween(2, 48));
-		params.put("seguro", faker.bool().bool());
-		
-		given()
-			.contentType("application/json")
-			.body(params)
-		.when()
-			.put("/simulacoes/" + params.get("cpf"))
-		.then()
-			.statusCode(404)
-			.contentType("application/json; charset=utf-8")
-			.body("mensagem", is("CPF " + params.get("cpf") + " não encontrado"))
-		;
-	}
-	
-	@Test
-	public void alterarSimulacaoCpfExistente() {
-		
-		Faker faker = new Faker();
+		Simulacao simulacao = SimulacaoFactory.gerarSimulacaoCadastro();
+        Simulacao simulacaoCadastrada = SimulacaoFactory.buscarSimulacaoCadastrada();
 
-		Map<String, Object> params = new HashMap<String, Object>();
-		
-		params.put("nome", faker.name().firstName());
-		params.put("cpf", "17822386034");
-		params.put("email", params.get("nome").toString().toLowerCase() + "@mail.com");
-		params.put("valor", faker.number().randomDouble(2, 1000, 40000));
-		params.put("parcelas", faker.number().numberBetween(2, 48));
-		params.put("seguro", faker.bool().bool());
-		
-		String cpfAtual = "66414919004";
-		
-		given()
-			.contentType("application/json")
-			.body(params)
-		.when()
-			.put("/simulacoes/" + cpfAtual)
-		.then()
-			.statusCode(409)
-			.contentType("application/json; charset=utf-8")
-			.body("mensagem", is("CPF já existente"))
-		;
+        simulacao.setCpf(simulacaoCadastrada.getCpf());
+
+        given()
+            .contentType(ContentType.JSON)
+            .body(simulacao)
+        .when()
+            .post("/simulacoes")
+        .then()
+            .statusCode(HttpStatus.SC_CONFLICT)
+            .contentType(ContentType.JSON)
+            .body("mensagem", is(MensagemErroFactory.mensagemCpf(simulacao.getCpf())))
+        ;
 	}
-	
+		
 	@Test
-	public void consultarSimulacoes() {
-		given()
-		.when()
-			.get("/simulacoes")
-		.then()
-			.statusCode(200)
-			.body("$", hasSize(greaterThan(0)))
-		;
-	}
+    public void deveAtualizarSimulacaoComSucesso() {
+
+        List<Simulacao> simulacoes = SimulacaoFactory.buscarSimulacoes();
+
+        Simulacao simulacao = simulacoes.get(0);
+        Simulacao simulacaoCadastro = SimulacaoFactory.gerarSimulacaoCadastro();
+
+        simulacao.setNome(simulacaoCadastro.getNome());
+        simulacao.setEmail(simulacaoCadastro.getEmail());
+
+        given()
+            .pathParam("cpf", simulacao.getCpf())
+            .contentType(ContentType.JSON)
+            .body(simulacao)
+        .when()
+            .put("/simulacoes/{cpf}")
+        .then()
+            .statusCode(HttpStatus.SC_OK)
+            .contentType("application/json; charset=utf-8")
+            .body("id", is(notNullValue()))
+            .body("nome", is(simulacao.getNome()))
+            .body("cpf", is(simulacao.getCpf()))
+            .body("email", is(simulacao.getEmail()))
+            .body("valor", is((float) simulacao.getValor()))
+            .body("parcelas", is(simulacao.getParcelas()))
+            .body("seguro", is(simulacao.isSeguro()))
+        ;
+    }
+
+    @Test
+    public void deveReportarAtualizacaoComCpfInexistente() {
+
+        Simulacao simulacao = SimulacaoFactory.buscarSimulacaoRemovida();
+
+        given()
+            .pathParam("cpf", simulacao.getCpf())
+            .contentType(ContentType.JSON)
+            .body(simulacao)
+        .when()
+            .put("/simulacoes/{cpf}")
+        .then()
+            .statusCode(HttpStatus.SC_NOT_FOUND)
+            .contentType(ContentType.JSON)
+            .body("mensagem", is("CPF " + simulacao.getCpf() + " não encontrado"))
+        ;
+
+    }
 	
-	@Test
-	public void consultarSimulacoesRetornoVazio() {
-		given()
-		.when()
-			.get("/simulacoes")
-		.then()
-			.body("$", hasSize(greaterThan(0)))
-			.statusCode(204)
-		;
-	}
-	
-	@Test
-	public void consultarSimulacaoPorCpf() {
-		
-		int id = 12;
-		String nome = "Deltrano";
-		String cpf = "17822386034";
-		String email = "deltrano@gmail.com";
-		double valor = 20000.00;
-		int parcelas = 5;
-		boolean seguro = false;
-		
-		given()
-		.when()
-			.get("/simulacoes/" + cpf)
-		.then()
-			.statusCode(200)
-			.body("id", is(id))
-			.body("nome", is(nome))
-			.body("cpf", is(cpf))
-			.body("email", is(email))
-			.body("valor", is((float) valor))
-			.body("parcelas", is(parcelas))
-			.body("seguro", is(seguro))
-		;
-	}
-	
-	@Test
-	public void consultarSimulacaoInexistente() {
-	
-		String cpf = "00000000000";
-		
-		given()
-		.when()
-			.get("/simulacoes/" + cpf)
-		.then()
-			.statusCode(404)
-			.body("mensagem", is("CPF " + cpf + " não encontrado"))
-		;
-	}
-	
-	@Test
-	public void removerSimulacao() {
-		
-		int id = 12;
-		
-		given()
-		.when()
-			.delete("/simulacoes/" + id)
-		.then()
-			.log().all()
-			.statusCode(200)
-		;
-	}
+    @Test
+    public void deveListarSimulacoes() {
+        given()
+        .when()
+            .get("/simulacoes")
+        .then()
+            .statusCode(HttpStatus.SC_OK)
+            .body("$", hasSize(greaterThan(0)))
+        ;
+    }
+
+    @Test
+    public void deveBuscarSimulacaoPorCpfComSucesso() {
+
+        Simulacao simulacao = SimulacaoFactory.buscarSimulacaoCadastrada();
+
+        given()
+            .pathParam("cpf", simulacao.getCpf())
+        .when()
+            .get("/simulacoes/{cpf}")
+        .then()
+            .statusCode(HttpStatus.SC_OK)
+            .contentType(ContentType.JSON)
+            .body("id", is(notNullValue()))
+            .body("nome", is(simulacao.getNome()))
+            .body("cpf", is(simulacao.getCpf()))
+            .body("email", is(simulacao.getEmail()))
+            .body("valor", is((float) simulacao.getValor()))
+            .body("parcelas", is(simulacao.getParcelas()))
+            .body("seguro", is(simulacao.isSeguro()))
+        ;
+    }
+
+    @Test
+    public void deveReportarBuscaDeSimulacaoComCpfInexistente() {
+
+        Simulacao simulacao = SimulacaoFactory.buscarSimulacaoRemovida();
+
+        given()
+            .pathParam("cpf", simulacao.getCpf())
+        .when()
+            .get("/simulacoes/{cpf}")
+        .then()
+            .statusCode(HttpStatus.SC_NOT_FOUND)
+            .contentType(ContentType.JSON)
+            .body("mensagem", is("CPF " + simulacao.getCpf() + " não encontrado"))
+        ;
+    }
+
+    @Test
+    public void devePesquisarPorNomeComSucesso() {
+
+        List<Simulacao> simulacoes = SimulacaoFactory.buscarSimulacoes();
+
+        Simulacao simulacao = simulacoes.get(0);
+
+        given()
+            .queryParam("nome", simulacao.getNome())
+        .when()
+            .get("/simulacoes")
+        .then()
+            .statusCode(HttpStatus.SC_OK)
+            .body(
+                "[0].nome", is(simulacao.getNome()),
+                "[0].cpf", is(simulacao.getCpf()),
+                "[0].email", is(simulacao.getEmail()),
+                "[0].valor", is((float) simulacao.getValor()),
+                "[0].parcelas", is(simulacao.getParcelas()),
+                "[0].seguro", is(simulacao.isSeguro())
+            )
+        ;
+    }
+
+    @Test
+    public void deveReportarPesquisaPorNomeInexistente() {
+
+        String nome = SimulacaoFactory.buscarNomeInexistente();
+
+        given()
+            .queryParam("nome", nome)
+        .when()
+            .get("/simulacoes")
+        .then()
+            .statusCode(HttpStatus.SC_NO_CONTENT)
+        ;
+    }
+    
+    @Test
+    public void deveRemoverSimulacaoComSucesso() {
+
+        Simulacao simulacao = SimulacaoFactory.buscarSimulacaoCadastrada();
+
+        given()
+            .pathParam("cpf", simulacao.getCpf())
+        .when()
+            .delete("/simulacoes/{cpf}")
+        .then()
+            .statusCode(HttpStatus.SC_NO_CONTENT)
+        ;
+
+    }
+
+    @Test
+    public void deveReportarRemocaoComCpfInexistente() {
+
+        Simulacao simulacao = SimulacaoFactory.buscarSimulacaoRemovida();
+
+        given()
+            .pathParam("cpf", simulacao.getCpf())
+        .when()
+            .delete("/simulacoes/{cpf}")
+        .then()
+            .statusCode(HttpStatus.SC_NOT_FOUND)
+            .contentType(ContentType.JSON)
+            .body("mensagem", is("CPF " + simulacao.getCpf() + " não encontrado"))
+        ;
+
+    }
 
 }

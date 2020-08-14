@@ -4,8 +4,8 @@ import io.restassured.RestAssured;
 
 public class BaseTest {
 	public BaseTest() {
-		RestAssured.baseURI = "http://localhost";
-		RestAssured.port = 8888;
+		RestAssured.baseURI = "https://backend-treinamento-rest-api-f.herokuapp.com";
+		RestAssured.port = 443;
 		RestAssured.basePath = "/api/v1";
 	}
 }

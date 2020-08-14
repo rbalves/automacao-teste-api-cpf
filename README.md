@@ -1,9 +1,11 @@
-# Teste de API de restrições e simulações através do CPF
-Projeto de automação desenvolvido para testar API que gerencia restrições e simulações por CPF.
+# Teste de API: Restrições e simulações através do CPF
+Projeto de automação desenvolvido para testar API que gerencia restrições e simulações por CPF, que pode ser acessada [aqui](https://backend-treinamento-rest-api-f.herokuapp.com/swagger-ui.html).
 
-## Preparando o ambiente
+## Ferramentas necessárias
 
-Para executar o projeto, foi necessário instalar e configurar os seguintes programas:
+Para executar o projeto, é necessário instalar e configurar as seguintes ferramentas:
+
+- [Git](https://git-scm.com/)
 
 - [JDK](https://www.oracle.com/technetwork/java/javase/14-0-1-relnotes-5972653.html)
 	
@@ -22,10 +24,15 @@ Após baixar o arquivo .zip, foi necessário executar as seguintes etapas:
 3. Editar a variável Path adicionando %M2_HOME% \ bin;
 4. Confirmar a instalação usando o comando 'mvn' (mensagens de erro podem aparecer, porém o Maven foi instalado)
 
-## Criando o projeto
-Um projeto Maven foi criado a partir do Eclipse. 
-As dependências são gerenciadas através do arquivo pom.xml.
-Os trechos XML das dependências foram consultados no [MVNRepository](https://mvnrepository.com/).
+## Clonando o projeto
+1. Abra o Prompt de Comando (Windows) ou o Terminal (Mac ou Linux)
+2. Navegue até um diretório de sua escolha
+3. Execute o seguinte comando git clone https://github.com/rbalves/automacao-teste-api-cpf.git
+4. Navegue, via Prompt de Comando ou Terminal, até o diretório do projeto automacao-teste-api-cpf
+5. Execute o comando mvn compile e aguarde até o término do build
+6. Abra a sua IDE de Desenvolvimento
+7. Nela, seleciona a opção de importação de projetos para o tipo Maven apontando para a pasta automacao-teste-api-cpf
+8. Aguarde sua IDE efetuar todas as configurações necessárias
 
 ## Dependências
 - REST Assured 4.0.0
@@ -35,36 +42,35 @@ Os trechos XML das dependências foram consultados no [MVNRepository](https://mv
 
 ## Estrutura do projeto
 O projeto está estruturado da seguinte forma:
-1. **src/test/java**: neste local, foram criados dois pacotes: "core" e "rest".
-	- No pacote "core", foi adicionada a classe "BaseTest", responsável por setar os parâmetros do caminho padrão para as requisições. 
+1. **src/main/java**: 
+	- No pacote "core", foram adicionadas:
+		- a classe "BaseTest", responsável por setar os parâmetros do caminho padrão para as requisições.
+		- a classe Simulacao
+		- o pacote factories, com as classes de fabricação.
+2. **src/test/java**: 
 	- No pacote "rest", foram adicionadas duas classes com seus respectivos testes:
 		- RestricoesTest
-			- verificarCPFSemRestricao
-			- verificarCPFsComRestricao
+			- deveValidarCPFComRestricao
+			- deveValidarCPFSemRestricao
 		- SimulacoesTest
-			- criarSimulacaoDadosValidos
-			- criarSimulacaoDadosInvalidos
-			- criarSimulacaoCpfExistente
-			- alterarSimulacaoDadosValidos
-			- alterarSimulacaoCpfInexistente
-			- alterarSimulacaoCpfExistente
-			- consultarSimulacoes
-			- consultarSimulacoesRetornoVazio
-			- consultarSimulacaoPorCpf
-			- consultarSimulacaoInexistente
-			- removerSimulacao
+			- deveCadastrarSimulacaoComSucesso
+			- deveReportarCadastroComDadosInvalidos
+			- deveReportarCadastroComCpfInvalido
+			- deveAtualizarSimulacaoComSucesso
+			- deveReportarAtualizacaoComCpfInexistente
+			- deveListarSimulacoes
+			- deveBuscarSimulacaoPorCpfComSucesso
+			- deveReportarBuscaDeSimulacaoComCpfInexistente
+			- devePesquisarPorNomeComSucesso
+			- deveReportarPesquisaPorNomeInexistente
+			- deveRemoverSimulacaoComSucesso
+			- deveReportarRemocaoComCpfInexistente
+
+
 
 ## Executando os testes
-Para executar os testes, é necessário abrir o terminal na raiz do projeto e executar o comando, conforme exemplicado a seguir:
-```shell
-mvn -Dtest=<classe>#<teste> test	
-```
 
-## Possíveis falhas encontradas
-Ao executar os testes desenvolvidos, conforme orientações na documentação da API, foram detectadas as seguintes falhas:
-1. ao tentar cadastrar uma simulação com CPF já existente:
-	- era esperado o retorno do status code 409, porém retornou 400.
-	- era esperada a mensagem "CPF já existente", porém retornou "CPF duplicado"
-2. ao tentar cadastrar uma simulação com dados todos obrigatórios não informados, 
-não são retornadas mensagens de erro para os atributos "nome", "cpf" e "valor", conforme era esperado, segundo as regras.
-3. ao tentar atualizar uma simulação, o atributo "valor" não é atualizado.
+Para executar os testes, é necessário abrir o terminal na raiz do projeto e executar o comando a seguir:
+```shell
+mvn test	
+```
